@@ -1,46 +1,108 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useAuth } from "@/lib/auth-context"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { BookNestLogo, EyeIcon, EyeOffIcon } from "@/components/icons"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BookNestLogo, EyeIcon, EyeOffIcon } from "@/components/icons";
 
 export default function LoginPage() {
-  const { login, isLoading } = useAuth()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState("")
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    if (!email || !password) {
-      setError("Please fill in all fields")
-      return
+    if (!email.trim() || !password) {
+      setError("Please enter email and password");
+      setLoading(false);
+      return;
     }
 
     try {
-      await login(email, password)
-    } catch {
-      setError("Invalid credentials")
-    }
-  }
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth";
 
-  const handleDemoLogin = async (role: "reader" | "author" | "admin") => {
-    const emails = {
-      reader: "reader@booknest.com",
-      author: "author@booknest.com",
-      admin: "admin@booknest.com",
+      const response = await fetch(`${apiUrl}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Invalid email or password");
+      }
+
+      // Assuming your backend returns something like:
+      // {
+      //   token: "jwt...",
+      //   user: { id, name, email, role }
+      // }
+      // Adjust the field names according to your actual response
+
+      const { token, user } = data;
+
+      if (!token || !user?.role) {
+        throw new Error("Invalid response from server");
+      }
+
+      // Store token (most common pattern)
+      localStorage.setItem("token", token);
+      // Optional: store user info
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // Redirect based on role
+      if (user.role === "reader") {
+        router.push("/readerDashboard");
+      } else if (user.role === "author") {
+        router.push("/author/dashboard");
+      } else if (user.role === "admin") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard"); // fallback
+      }
+
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    await login(emails[role], "demo123")
-  }
+  };
+
+  // Optional: keep demo logins if you still want them (but using real backend)
+  // You would need to create these test users in your database
+  const handleDemoLogin = async (role: "reader" | "author" | "admin") => {
+    const demoCredentials = {
+      reader: { email: "reader@booknest.com", password: "demo123" },
+      author: { email: "author@booknest.com", password: "demo123" },
+      admin: { email: "admin@booknest.com", password: "demo123" },
+    };
+
+    const { email, password } = demoCredentials[role];
+
+    setEmail(email);
+    setPassword(password);
+
+    // Trigger real login
+    await handleSubmit(new Event("submit") as any);
+  };
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -71,6 +133,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-12"
+                disabled={loading}
               />
             </div>
 
@@ -89,22 +152,25 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="h-12 pr-10"
+                  disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={loading}
                 >
                   {showPassword ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-12" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+            <Button type="submit" className="w-full h-12" disabled={loading}>
+              {loading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
 
+          {/* Optional demo buttons – only useful if you created these users in DB */}
           <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -120,7 +186,7 @@ export default function LoginPage() {
                 type="button"
                 variant="outline"
                 onClick={() => handleDemoLogin("reader")}
-                disabled={isLoading}
+                disabled={loading}
                 className="h-11"
               >
                 Reader
@@ -129,7 +195,7 @@ export default function LoginPage() {
                 type="button"
                 variant="outline"
                 onClick={() => handleDemoLogin("author")}
-                disabled={isLoading}
+                disabled={loading}
                 className="h-11"
               >
                 Author
@@ -138,7 +204,7 @@ export default function LoginPage() {
                 type="button"
                 variant="outline"
                 onClick={() => handleDemoLogin("admin")}
-                disabled={isLoading}
+                disabled={loading}
                 className="h-11"
               >
                 Admin
@@ -168,5 +234,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
