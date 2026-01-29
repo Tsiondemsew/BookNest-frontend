@@ -1,8 +1,8 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Libre_Baskerville, Playfair_Display } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import { AuthProvider } from "@/lib/auth-context"
+import { Analytics } from "@vercel/analytics/next" 
+import { AuthProvider } from '@/lib/auth-context'  // ← Use this one instead
 import "./globals.css"
 
 const libreBaskerville = Libre_Baskerville({

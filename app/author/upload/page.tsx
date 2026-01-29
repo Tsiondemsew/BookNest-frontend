@@ -301,22 +301,22 @@ export default function UploadBookPage() {
 
             {formData.pdfFile && (
               <div className="space-y-2">
-                <Label htmlFor="pdfPrice">PDF Price (USD) *</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                  <Input
-                    id="pdfPrice"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    className="pl-8"
-                    value={formData.pdfPrice}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, pdfPrice: e.target.value }))}
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground">Recommended: $9.99 - $19.99</p>
-              </div>
+// In Pricing step (Step 3)
+<Label htmlFor="pdfPrice">PDF Price (ETB) *</Label>
+<div className="relative">
+  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">ETB</span>
+  <Input
+    id="pdfPrice"
+    type="number"
+    step="1"
+    min="50"
+    placeholder="50"
+    className="pl-12" // More space for "ETB"
+    value={formData.pdfPrice}
+    onChange={(e) => setFormData((prev) => ({ ...prev, pdfPrice: e.target.value }))}
+  />
+</div>
+<p className="text-sm text-muted-foreground">Minimum: 50 ETB</p>              </div>
             )}
 
             {formData.audioFile && (

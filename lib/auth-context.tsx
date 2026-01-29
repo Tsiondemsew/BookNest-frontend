@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 
-export type UserRole = "reader" | "author" | "admin"
+export type UserRole = "reader" | "author" | "publisher" | "admin"
 
 export interface User {
   id: string
@@ -28,6 +28,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const demoUsers: Record<string, User> = {
   "reader@booknest.com": { id: "1", name: "John Reader", email: "reader@booknest.com", role: "reader" },
   "author@booknest.com": { id: "2", name: "James Clear", email: "author@booknest.com", role: "author" },
+  "publisher@booknest.com": { id: "4", name: "Pam Publisher", email: "publisher@booknest.com", role: "publisher" },
   "admin@booknest.com": { id: "3", name: "Admin User", email: "admin@booknest.com", role: "admin" },
 }
 
@@ -106,6 +107,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     switch (role) {
       case "admin":
         router.push("/admin")
+        break
+      case "publisher":
+        router.push("/publisher")
         break
       case "author":
         router.push("/author")
