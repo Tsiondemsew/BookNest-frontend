@@ -50,6 +50,8 @@ export default function LoginPage() {
       // Role-based redirect logic
       if (user.role === "admin") router.push("/admin");
       else if (user.role === "reader") router.push("/dashboard");
+      else if (user.role === "author") router.push("/author");
+      else if (user.role === "publisher") router.push("/author");
       else router.push("/");
 
     } catch (err: any) {
