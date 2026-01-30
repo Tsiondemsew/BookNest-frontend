@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -37,71 +37,52 @@ import {
   Download,
 } from "lucide-react"
 import Image from "next/image"
+import { booksAPI } from "@/lib/api"
 
-const books = [
-  {
-    id: 1,
-    title: "The Art of Focus",
-    author: "Jessica Taylor",
-    category: "Self-Help",
-    status: "published",
-    submitted: "Dec 10, 2025",
-    price: "$14.99",
-    cover: "/focus-book-cover.jpg",
-  },
-  {
-    id: 2,
-    title: "Modern Philosophy",
-    author: "David Kim",
-    category: "Philosophy",
-    status: "pending",
-    submitted: "Dec 28, 2025",
-    price: "$19.99",
-    cover: "/philosophy-book-cover.jpg",
-  },
-  {
-    id: 3,
-    title: "Digital Art Guide",
-    author: "Emily Rodriguez",
-    category: "Art & Design",
-    status: "flagged",
-    submitted: "Dec 20, 2025",
-    price: "$24.99",
-    cover: "/digital-art-book-cover.jpg",
-  },
-  {
-    id: 4,
-    title: "Mindful Living",
-    author: "Sarah Mitchell",
-    category: "Self-Help",
-    status: "published",
-    submitted: "Nov 15, 2025",
-    price: "$9.99",
-    cover: "/mindfulness-book-cover.jpg",
-  },
-  {
-    id: 5,
-    title: "Cooking Basics",
-    author: "Michael Chen",
-    category: "Cooking",
-    status: "rejected",
-    submitted: "Dec 5, 2025",
-    price: "$12.99",
-    cover: "/cooking-book-cover.jpg",
-  },
-]
 
 export default function BooksPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
-  const [selectedBook, setSelectedBook] = useState<(typeof books)[0] | null>(null)
+  const [selectedBook, setSelectedBook] = useState<any | null>(null)
   const [actionDialog, setActionDialog] = useState<"view" | "approve" | "reject" | null>(null)
   const [rejectionReason, setRejectionReason] = useState("")
 
-  const filteredBooks = books.filter((book) => {
+  const [booksList, setBooksList] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    setLoading(true)
+    ;(async () => {
+      try {
+        const res = await booksAPI.search({ page: 1, limit: 100 })
+        const items = res?.data?.books || res?.books || res || []
+        if (!mounted) return
+        const mapped = items.map((b: any) => ({
+          id: b.id,
+          title: b.title,
+          author: b.authorName || b.author || (b.author && b.author.name) || 'Unknown',
+          category: b.category?.name || b.category || b.categoryName || 'Uncategorized',
+          status: b.status || b.publish_status || 'published',
+          submitted: b.submitted_at || b.created_at || b.created_at || '',
+          price: b.formats ? (b.formats.find((f:any)=> String(f.format_type||f).toLowerCase().includes('pdf'))?.price ?? '') : '',
+          cover: b.coverImageUrl || b.cover || b.cover_image_url || '',
+        }))
+        setBooksList(mapped)
+      } catch (e) {
+        setBooksList([])
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    })()
+
+    return () => { mounted = false }
+  }, [])
+
+  const filteredBooks = booksList.filter((book) => {
     const matchesSearch =
       book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchQuery.toLowerCase())
+      (book.author || '').toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = categoryFilter === "all" || book.category === categoryFilter
     return matchesSearch && matchesCategory
   })

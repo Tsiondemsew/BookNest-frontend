@@ -2,9 +2,11 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { BookNestLogo, MenuIcon, XIcon, GlobeIcon, ChevronDownIcon } from "@/components/icons"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/lib/auth-context"
 
 const navigation = [
   { name: "Browse", href: "/browse" },
@@ -14,6 +16,42 @@ const languages = [
   { code: "en", name: "English" },
   { code: "am", name: "አማርኛ" },
 ]
+
+function AuthAwareActions() {
+  const router = useRouter()
+  const { user, logout } = useAuth()
+
+  if (!user) {
+    return (
+      <>
+        <Link href="/login">
+          <Button variant="ghost" size="sm">
+            Sign in
+          </Button>
+        </Link>
+        <Link href="/register">
+          <Button size="sm">Get Started</Button>
+        </Link>
+      </>
+    )
+  }
+
+  const initials = (user?.display_name || user?.name || "").split(" ").map((n: string) => n[0]).join("") || "U"
+
+  return (
+    <div className="flex items-center gap-3">
+      <Link href="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        Dashboard
+      </Link>
+      <Button variant="ghost" size="sm" onClick={() => { logout(); router.push('/') }}>
+        Sign out
+      </Button>
+      <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-sm font-medium text-sidebar-foreground">
+        {initials}
+      </div>
+    </div>
+  )
+}
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -59,14 +97,8 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Link href="/login">
-            <Button variant="ghost" size="sm">
-              Sign in
-            </Button>
-          </Link>
-          <Link href="/register">
-            <Button size="sm">Get Started</Button>
-          </Link>
+          {/* Auth-aware actions */}
+          <AuthAwareActions />
         </div>
 
         <div className="flex lg:hidden">
@@ -91,14 +123,7 @@ export function Header() {
               </Link>
             ))}
             <div className="pt-4 flex flex-col gap-3">
-              <Link href="/login">
-                <Button variant="outline" className="w-full bg-transparent">
-                  Sign in
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button className="w-full">Get Started</Button>
-              </Link>
+              <AuthAwareActions />
             </div>
           </div>
         </div>

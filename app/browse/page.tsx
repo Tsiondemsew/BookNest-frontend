@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { BookCard } from "@/components/dashboard/book-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SearchIcon, ChevronDownIcon, GridIcon, ListIcon } from "@/components/icons"
 import { cn } from "@/lib/utils"
+import { booksAPI } from "@/lib/api"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,20 +16,12 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 
-const categories = [
+// categories and languages will be loaded from the API
+const [fallbackCategories] = [
   "All Categories",
-  "Self-Development",
-  "Business & Finance",
-  "Science & Technology",
-  "Fiction",
-  "History",
-  "Philosophy",
-  "Psychology",
-  "Health & Wellness",
-  "Biography",
 ]
 
-const languages = ["All Languages", "English", "Amharic", "French", "Spanish"]
+const staticLanguages = ["All Languages", "English", "Amharic", "French", "Spanish"]
 
 const sortOptions = [
   { value: "popular", label: "Most Popular" },
@@ -38,103 +31,110 @@ const sortOptions = [
   { value: "price-high", label: "Price: High to Low" },
 ]
 
-const allBooks = [
-  {
-    id: "2",
-    title: "The Shadow King",
-    author: "Maaza Mengiste",
-    rating: 4.2,
-    hasPdf: true,
-    hasAudio: true,
-    price: { pdf: 13.99, audio: 18.99 },
-    category: "Historical Fiction",
-    coverUrl: "https://covers.openlibrary.org/b/id/8789311-L.jpg",
-  },
-  {
-    id: "3",
-    title: "The Beautiful Things That Heaven Bears",
-    author: "Dinaw Mengestu",
-    rating: 4.4,
-    hasPdf: true,
-    hasAudio: false,
-    price: { pdf: 12.99 },
-    category: "Fiction",
-    coverUrl: "https://covers.openlibrary.org/b/id/872577-L.jpg",
-  },
-  {
-    id: "4",
-    title: "Cutting for Stone",
-    author: "Abraham Verghese",
-    rating: 4.6,
-    hasPdf: true,
-    hasAudio: true,
-    price: { pdf: 15.99, audio: 21.99 },
-    category: "Literary Fiction",
-    coverUrl: "https://covers.openlibrary.org/b/id/8474220-L.jpg",
-  },
-  {
-    id: "5",
-    title: "Beneath the Lion's Gaze",
-    author: "Maaza Mengiste",
-    rating: 4.3,
-    hasPdf: true,
-    hasAudio: false,
-    price: { pdf: 11.99 },
-    category: "Historical Fiction",
-    coverUrl: "https://covers.openlibrary.org/b/id/6308135-L.jpg",
-  },
-  {
-    id: "6",
-    title: "Notes from the Hyena's Belly",
-    author: "Nega Mezlekia",
-    rating: 4.1,
-    hasPdf: true,
-    hasAudio: false,
-    price: { pdf: 9.99 },
-    category: "Memoir",
-    coverUrl: "https://covers.openlibrary.org/b/id/177697-L.jpg",
-  },
-  {
-    id: "7",
-    title: "My Name Is Why",
-    author: "Lemn Sissay",
-    rating: 4.4,
-    hasPdf: true,
-    hasAudio: false,
-    price: { pdf: 10.99 },
-    category: "Memoir",
-    coverUrl: "https://covers.openlibrary.org/b/id/10205356-L.jpg",
-  },
-  {
-    id: "8",
-    title: "The Autobiography of Emperor Haile Selassie I",
-    author: "Haile Selassie I",
-    rating: 4.0,
-    hasPdf: true,
-    hasAudio: false,
-    price: { pdf: 8.99 },
-    category: "History",
-    coverUrl: "https://covers.openlibrary.org/b/id/1686642-L.jpg",
-  },
-]
 
 export default function BrowsePage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [selectedCategory, setSelectedCategory] = useState("All Categories")
-  const [selectedLanguage, setSelectedLanguage] = useState("All Languages")
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("") // empty -> all
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("") // empty -> all
   const [sortBy, setSortBy] = useState("popular")
   const [searchQuery, setSearchQuery] = useState("")
   const [showFilters, setShowFilters] = useState(false)
 
-  const filteredBooks = allBooks.filter((book) => {
-    if (
-      searchQuery &&
-      !book.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !book.author.toLowerCase().includes(searchQuery.toLowerCase())
-    ) {
-      return false
+  const [books, setBooks] = useState<Array<any>>([])
+  const [booksLoading, setBooksLoading] = useState(false)
+  const [booksError, setBooksError] = useState<string | null>(null)
+  const [categoriesList, setCategoriesList] = useState<Array<{id:string,name:string}>>([])
+  const [languagesList, setLanguagesList] = useState<string[]>(staticLanguages)
+
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalBooks, setTotalBooks] = useState(0)
+
+  const fetchBooks = async () => {
+    setBooksLoading(true)
+    setBooksError(null)
+
+    try {
+      const sortMap: any = {
+        popular: 'popular',
+        newest: 'newest',
+        rating: 'highest_rated',
+        'price-low': 'price_low_high',
+        'price-high': 'price_high_low',
+      }
+
+      const params: any = { page, limit: 20, sortBy: sortMap[sortBy] || 'newest' }
+      if (searchQuery) params.query = searchQuery
+      if (selectedCategoryId) params.categoryId = selectedCategoryId
+      if (selectedLanguage) params.language = selectedLanguage
+
+      const res = await booksAPI.search(params)
+
+      // Expect { success:true, data: { books: [], pagination: {} } }
+      const respBooks = res?.data?.books || res?.books || []
+      const pagination = res?.data?.pagination || null
+
+      setBooks(
+        respBooks.map((b: any) => ({
+          id: b.id,
+          title: b.title,
+          author: b.authorName || b.author_name || b.author || "Unknown",
+          coverUrl: b.coverImageUrl || b.cover_image_url || b.cover || null,
+          rating: b.averageRating || b.rating || null,
+          hasPdf: (b.availableFormats || b.formats || []).some((f: any) => String(f.format_type || f).toLowerCase().includes('pdf')),
+          hasAudio: (b.availableFormats || b.formats || []).some((f: any) => String(f.format_type || f).toLowerCase().includes('audio')),
+          price: {
+            pdf: b.formats ? (b.formats.find((f: any) => String(f.format_type).toLowerCase().includes('pdf'))?.price ?? null) : (b.priceRange?.min ?? null),
+            audio: b.formats ? (b.formats.find((f: any) => String(f.format_type).toLowerCase().includes('audio'))?.price ?? null) : null,
+          },
+        }))
+      )
+
+      if (pagination) {
+        setTotalBooks(pagination.total || 0)
+        setTotalPages(pagination.totalPages || 1)
+      } else {
+        setTotalBooks(respBooks.length)
+        setTotalPages(1)
+      }
+    } catch (err: any) {
+      setBooksError(err?.message || 'Failed to load books')
+      setBooks([])
+    } finally {
+      setBooksLoading(false)
     }
-    if (selectedCategory !== "All Categories" && book.category !== selectedCategory) {
+  }
+
+  const fetchFilters = async () => {
+    try {
+      const c = await booksAPI.getCategories()
+      const cats = Array.isArray(c) ? c : (c?.data || [])
+      setCategoriesList(cats.map((x: any) => ({ id: String(x.id), name: x.name || x.title || x.value || String(x.id) })))
+
+      const langs = await booksAPI.getLanguages()
+      const ll = Array.isArray(langs) ? langs : (langs?.data || [])
+      setLanguagesList(['All Languages', ...(ll || [])])
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  useEffect(() => {
+    void fetchFilters()
+  }, [])
+
+  useEffect(() => {
+    void fetchBooks()
+  }, [page, sortBy, selectedCategoryId, selectedLanguage, searchQuery])
+
+  // Reset to first page when filters or search change
+  useEffect(() => {
+    setPage(1)
+  }, [sortBy, selectedCategoryId, selectedLanguage, searchQuery])
+
+  const filteredBooks = books.filter((book) => {
+    // local search/filter fallback if backend not used
+    if (searchQuery && !book.title.toLowerCase().includes(searchQuery.toLowerCase()) && !book.author.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false
     }
     return true
@@ -166,20 +166,27 @@ export default function BrowsePage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="h-12 gap-2 bg-transparent">
-                {selectedCategory}
+                {selectedCategoryId ? (categoriesList.find(c => c.id === selectedCategoryId)?.name || 'Category') : 'All Categories'}
                 <ChevronDownIcon className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Categories</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {categories.map((category) => (
+              <DropdownMenuItem
+                key="all"
+                onClick={() => setSelectedCategoryId("")}
+                className={!selectedCategoryId ? "bg-accent" : ""}
+              >
+                All Categories
+              </DropdownMenuItem>
+              {categoriesList.map((category) => (
                 <DropdownMenuItem
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={selectedCategory === category ? "bg-accent" : ""}
+                  key={category.id}
+                  onClick={() => setSelectedCategoryId(category.id)}
+                  className={selectedCategoryId === category.id ? "bg-accent" : ""}
                 >
-                  {category}
+                  {category.name}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -188,17 +195,17 @@ export default function BrowsePage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="h-12 gap-2 bg-transparent">
-                {selectedLanguage}
+                {selectedLanguage || 'All Languages'}
                 <ChevronDownIcon className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Language</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {languages.map((language) => (
+              {languagesList.map((language) => (
                 <DropdownMenuItem
                   key={language}
-                  onClick={() => setSelectedLanguage(language)}
+                  onClick={() => setSelectedLanguage(language === 'All Languages' ? '' : language)}
                   className={selectedLanguage === language ? "bg-accent" : ""}
                 >
                   {language}
@@ -251,26 +258,26 @@ export default function BrowsePage() {
       </div>
 
       {/* Active filters */}
-      {(selectedCategory !== "All Categories" || selectedLanguage !== "All Languages" || searchQuery) && (
+      {(selectedCategoryId || selectedLanguage || searchQuery) && (
         <div className="flex items-center gap-2 mb-6 flex-wrap">
           <span className="text-sm text-muted-foreground">Active filters:</span>
-          {selectedCategory !== "All Categories" && (
+          {selectedCategoryId && (
             <Button
               variant="secondary"
               size="sm"
               className="h-7 gap-1"
-              onClick={() => setSelectedCategory("All Categories")}
+              onClick={() => setSelectedCategoryId("")}
             >
-              {selectedCategory}
+              {categoriesList.find(c => c.id === selectedCategoryId)?.name || 'Category'}
               <span className="ml-1">&times;</span>
             </Button>
           )}
-          {selectedLanguage !== "All Languages" && (
+          {selectedLanguage && (
             <Button
               variant="secondary"
               size="sm"
               className="h-7 gap-1"
-              onClick={() => setSelectedLanguage("All Languages")}
+              onClick={() => setSelectedLanguage("")}
             >
               {selectedLanguage}
               <span className="ml-1">&times;</span>
@@ -286,8 +293,8 @@ export default function BrowsePage() {
             size="sm"
             className="h-7 text-muted-foreground"
             onClick={() => {
-              setSelectedCategory("All Categories")
-              setSelectedLanguage("All Languages")
+              setSelectedCategoryId("")
+              setSelectedLanguage("")
               setSearchQuery("")
             }}
           >
@@ -298,11 +305,13 @@ export default function BrowsePage() {
 
       {/* Results count */}
       <p className="text-sm text-muted-foreground mb-6">
-        Showing {filteredBooks.length} {filteredBooks.length === 1 ? "book" : "books"}
+        Showing {totalBooks || books.length} {totalBooks === 1 ? "book" : "books"}
       </p>
 
       {/* Books Grid/List */}
-      {filteredBooks.length === 0 ? (
+      {booksLoading ? (
+        <div className="text-center py-16">Loading books...</div>
+      ) : books.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-lg text-muted-foreground">No books found matching your criteria.</p>
           <Button variant="outline" className="mt-4 bg-transparent" onClick={() => setSearchQuery("")}>
@@ -311,13 +320,13 @@ export default function BrowsePage() {
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {filteredBooks.map((book) => (
+          {books.map((book) => (
             <BookCard key={book.id} {...book} />
           ))}
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredBooks.map((book) => (
+          {books.map((book) => (
             <BookCard key={book.id} {...book} variant="horizontal" />
           ))}
         </div>
@@ -326,23 +335,11 @@ export default function BrowsePage() {
       {/* Pagination */}
       <div className="mt-12 flex justify-center">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled className="bg-transparent">
+          <Button variant="outline" size="sm" disabled={page <= 1} className="bg-transparent" onClick={() => setPage((p) => Math.max(1, p - 1))}>
             Previous
           </Button>
-          <Button variant="default" size="sm">
-            1
-          </Button>
-          <Button variant="outline" size="sm" className="bg-transparent">
-            2
-          </Button>
-          <Button variant="outline" size="sm" className="bg-transparent">
-            3
-          </Button>
-          <span className="px-2 text-muted-foreground">...</span>
-          <Button variant="outline" size="sm" className="bg-transparent">
-            12
-          </Button>
-          <Button variant="outline" size="sm" className="bg-transparent">
+          <span className="px-2 text-muted-foreground">Page {page} of {totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page >= totalPages} className="bg-transparent" onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
             Next
           </Button>
         </div>

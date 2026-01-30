@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +23,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/lib/auth-context"
+import { booksAPI } from "@/lib/api"
 
 interface AuthorBook {
   id: string
@@ -36,49 +38,6 @@ interface AuthorBook {
   publishDate?: string
 }
 
-const authorBooks: AuthorBook[] = [
-  {
-    id: "1",
-    title: "Atomic Habits",
-    status: "published",
-    formats: ["pdf", "audio"],
-    sales: 2847,
-    revenue: 42705,
-    rating: 4.8,
-    reviewCount: 2847,
-    publishDate: "Oct 16, 2018",
-  },
-  {
-    id: "2",
-    title: "Clear Thinking (Coming Soon)",
-    status: "draft",
-    formats: ["pdf"],
-    sales: 0,
-    revenue: 0,
-    reviewCount: 0,
-  },
-  {
-    id: "3",
-    title: "The Habits Academy Workbook",
-    status: "pending",
-    formats: ["pdf"],
-    sales: 0,
-    revenue: 0,
-    reviewCount: 0,
-  },
-  {
-    id: "4",
-    title: "Transform Your Habits Guide",
-    status: "published",
-    formats: ["pdf", "audio"],
-    sales: 1234,
-    revenue: 18510,
-    rating: 4.6,
-    reviewCount: 892,
-    publishDate: "Mar 5, 2022",
-  },
-]
-
 const statusColors = {
   published: "bg-success/10 text-success border-success/20",
   draft: "bg-muted text-muted-foreground border-muted",
@@ -86,8 +45,48 @@ const statusColors = {
 }
 
 export default function AuthorBooksPage() {
+  const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft" | "pending">("all")
+
+  const [authorBooks, setAuthorBooks] = useState<AuthorBook[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    let mounted = true
+    setLoading(true)
+    ;(async () => {
+      try {
+        // Prefer author id if available, else fetch by author name
+        const params: any = { page: 1, limit: 100 }
+        if (user.id) params.authorId = user.id
+        else if (user.display_name) params.authorName = user.display_name
+
+        const res = await booksAPI.search(params)
+        const items = res?.data?.books || res?.books || res || []
+        if (!mounted) return
+        const mapped: AuthorBook[] = items.map((b: any) => ({
+          id: b.id,
+          title: b.title,
+          status: (b.status || b.publish_status || 'published') as any,
+          formats: (b.formats || []).map((f: any) => String(f.format_type || f).toLowerCase()).filter(Boolean),
+          sales: b.sales_count || b.sales || 0,
+          revenue: b.revenue_total || b.revenue || 0,
+          rating: b.averageRating || b.rating || undefined,
+          reviewCount: b.reviews?.length || b.reviewCount || 0,
+          publishDate: b.publishDate || b.published_at || b.publish_date || undefined,
+        }))
+        setAuthorBooks(mapped)
+      } catch (e) {
+        setAuthorBooks([])
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    })()
+
+    return () => { mounted = false }
+  }, [user])
 
   const filteredBooks = authorBooks.filter((book) => {
     if (searchQuery && !book.title.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -160,7 +159,7 @@ export default function AuthorBooksPage() {
               <tr key={book.id} className="bg-card hover:bg-muted/30 transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <div className="w-12 h-16 rounded-lg bg-linear-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                       <BookIcon className="w-6 h-6 text-primary/40" />
                     </div>
                     <div>

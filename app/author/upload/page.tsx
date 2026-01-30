@@ -18,6 +18,7 @@ export default function UploadBookPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -136,11 +137,14 @@ export default function UploadBookPage() {
         throw new Error(res.error || "Upload failed")
       }
 
-      // Redirect based on role
+      // Show success message and redirect after a short delay
+      setSuccessMessage('Book uploaded successfully. Redirecting...')
       const role = user?.role || 'author'
-      if (role === 'publisher') router.push('/author')
-      else if (role === 'author') router.push('/author/books')
-      else router.push('/')
+      setTimeout(() => {
+        if (role === 'publisher') router.push('/author')
+        else if (role === 'author') router.push('/author/books')
+        else router.push('/')
+      }, 1400)
     } catch (err: any) {
       setError(err?.message || "Upload failed. Please try again.")
     } finally {
@@ -161,6 +165,12 @@ export default function UploadBookPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Upload New Book</h1>
         <p className="text-muted-foreground mt-1">Fill in the details to publish your book on BookNest</p>
+
+        {successMessage && (
+          <div className="mt-4 p-3 rounded-md bg-green-50 text-green-700 text-sm border border-green-100">
+            {successMessage}
+          </div>
+        )}
       </div>
 
       {/* Progress steps */}

@@ -1,70 +1,28 @@
+'use client'
+import { useEffect, useState } from "react"
+import Link from "next/link"
 import { StatsCard } from "@/components/dashboard/stats-card"
 import { BookCard } from "@/components/dashboard/book-card"
 import { ReadingActivity } from "@/components/dashboard/reading-activity"
 import { AchievementBadge } from "@/components/dashboard/achievement-badge"
- import { BookIcon, FireIcon, ClockIcon, CalendarIcon } from "@/components/icons"
-const continueReading = [
-  {
-    id: "1",
-    title: "መረቅ",
-    author: "አዳም ረታ",
-    progress: 67,
-    coverUrl: "/covers/book-1.svg",
-    hasPdf: true,
-    hasAudio: true,
-  },
-  {
-    id: "2",
-    title: "የስንብት ቀለማት",
-    author: "አዳም ረታ",
-    progress: 34,
-    coverUrl: "/covers/book-2.svg",
-    hasPdf: true,
-    hasAudio: false,
-  },
-  {
-    id: "3",
-    title: "ኦሮማይ",
-    author: "ባዕሉ ግርማ",
-    progress: 89,
-    coverUrl: "/covers/book-3.svg",
-    hasPdf: true,
-    hasAudio: true,
-  },
-]
+import { BookIcon, FireIcon, ClockIcon, CalendarIcon } from "@/components/icons"
+import { useAuth } from "@/lib/auth-context"
+import { booksAPI } from "@/lib/api"
 
-const recommendations = [
-  {
-    id: "4",
-    title: "ዙበዳ",
-    author: "አሌክስ አብርሃም",
-    rating: 4.7,
-    coverUrl: "/covers/book-4.svg",
-    hasPdf: true,
-    hasAudio: true,
-    price: { pdf: 14.99, audio: 19.99 },
+const mapBook = (b: any) => ({
+  id: b.id,
+  title: b.title,
+  author: b.authorName || b.author_name || b.author || "Unknown",
+  progress: b.progress ?? undefined,
+  coverUrl: b.coverImageUrl || b.cover || b.cover_image_url || null,
+  hasPdf: (b.availableFormats || b.formats || []).some((f: any) => String(f.format_type || f).toLowerCase().includes("pdf")),
+  hasAudio: (b.availableFormats || b.formats || []).some((f: any) => String(f.format_type || f).toLowerCase().includes("audio")),
+  rating: b.averageRating || b.rating || null,
+  price: {
+    pdf: b.formats ? (b.formats.find((f: any) => String(f.format_type).toLowerCase().includes('pdf'))?.price ?? null) : (b.priceRange?.min ?? null),
+    audio: b.formats ? (b.formats.find((f: any) => String(f.format_type).toLowerCase().includes('audio'))?.price ?? null) : null,
   },
-  {
-    id: "5",
-    title: "ከአምን ባሻገር",
-    author: "በውቀቱ ሲዩም",
-    rating: 4.5,
-    coverUrl: "/covers/book-5.svg",
-    hasPdf: true,
-    hasAudio: false,
-    price: { pdf: 12.99 },
-  },
-  {
-    id: "6",
-    title: "እሳት ወይ አቤባ",
-    author: "ሎሬት ጸጋዬ ገብረመድህን",
-    rating: 4.6,
-    coverUrl: "/covers/book-6.svg",
-    hasPdf: true,
-    hasAudio: true,
-    price: { pdf: 11.99, audio: 16.99 },
-  },
-]
+})
 
 const achievements = [
   {
@@ -98,11 +56,54 @@ const achievements = [
 ]
 
 export default function DashboardPage() {
+  
+  const { user } = useAuth();
+
+  // Dashboard lists (fetched from API)
+  const [continueReading, setContinueReading] = useState<any[]>([])
+  const [recommendations, setRecommendations] = useState<any[]>([])
+  const [loadingContinue, setLoadingContinue] = useState(false)
+  const [loadingRecs, setLoadingRecs] = useState(false)
+
+  useEffect(() => {
+    const fetchContinue = async () => {
+      setLoadingContinue(true)
+      try {
+        const res = await booksAPI.search({ page: 1, limit: 3, sortBy: 'newest' })
+        const resp = res?.data?.books || res?.books || []
+        setContinueReading(resp.map(mapBook))
+      } catch (e) {
+        setContinueReading([])
+      } finally {
+        setLoadingContinue(false)
+      }
+    }
+
+    const fetchRecs = async () => {
+      setLoadingRecs(true)
+      try {
+        const res = await booksAPI.search({ page: 1, limit: 6, sortBy: 'popular' })
+        const resp = res?.data?.books || res?.books || []
+        setRecommendations(resp.map(mapBook))
+      } catch (e) {
+        setRecommendations([])
+      } finally {
+        setLoadingRecs(false)
+      }
+    }
+
+    fetchContinue()
+    fetchRecs()
+  }, [])
+
+  // Use auth context values if available, otherwise fall back to props
+
+  const name = user?.display_name  ;
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Welcome back, John</h1>
+        <h1 className="text-2xl font-bold text-foreground">Welcome back {name}</h1>
         <p className="text-muted-foreground mt-1">{"Here's what's happening with your reading today."}</p>
       </div>
 
@@ -134,9 +135,9 @@ export default function DashboardPage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">Continue Reading</h2>
-              <a href="/dashboard/library" className="text-sm text-primary hover:underline">
+              <Link href="/dashboard/library" className="text-sm text-primary hover:underline">
                 View all
-              </a>
+              </Link> 
             </div>
             <div className="space-y-4">
               {continueReading.map((book) => (
@@ -155,9 +156,9 @@ export default function DashboardPage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">Achievements</h2>
-              <a href="/dashboard/achievements" className="text-sm text-primary hover:underline">
+              <Link href="/dashboard/achievements" className="text-sm text-primary hover:underline">
                 View all
-              </a>
+              </Link> 
             </div>
             <div className="space-y-3">
               {achievements.map((achievement, index) => (
@@ -170,9 +171,9 @@ export default function DashboardPage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">For You</h2>
-              <a href="/browse" className="text-sm text-primary hover:underline">
+              <Link href="/browse" className="text-sm text-primary hover:underline">
                 Browse more
-              </a>
+              </Link> 
             </div>
             <div className="grid grid-cols-3 gap-3">
               {recommendations.map((book) => (

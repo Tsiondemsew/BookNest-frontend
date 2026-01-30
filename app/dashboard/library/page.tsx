@@ -1,74 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import Link from "next/link"
 import { BookCard } from "@/components/dashboard/book-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SearchIcon, GridIcon, ListIcon } from "@/components/icons"
 import { cn } from "@/lib/utils"
+import { paymentsAPI } from "@/lib/api"
 
-const libraryBooks = [
-  {
-    id: "1",
-    title: "መረቅ",
-    author: "አዳም ረታ",
-    progress: 67,
-    hasPdf: true,
-    hasAudio: true,
-    coverUrl: "/covers/book-1.svg",
-  },
-  {
-    id: "2",
-    title: "የስንብት ቀለማት",
-    author: "አዳም ረታ",
-    progress: 34,
-    hasPdf: true,
-    hasAudio: false,
-    coverUrl: "/covers/book-2.svg",
-  },
-  {
-    id: "3",
-    title: "ኦሮማይ",
-    author: "ባዕሉ ግርማ",
-    progress: 89,
-    hasPdf: true,
-    hasAudio: true,
-    coverUrl: "/covers/book-3.svg",
-  },
-  {
-    id: "4",
-    title: "ዙበዳ",
-    author: "አሌክስ አብርሃም",
-    progress: 100,
-    hasPdf: true,
-    hasAudio: true,
-    rating: 4.7,
-    coverUrl: "/covers/book-4.svg",
-    price: { pdf: 14.99, audio: 19.99 },
-  },
-  {
-    id: "5",
-    title: "ከአምን ባሻገር",
-    author: "በውቀቱ ሲዩም",
-    progress: 12,
-    hasPdf: true,
-    hasAudio: false,
-    rating: 4.5,
-    coverUrl: "/covers/book-5.svg",
-    price: { pdf: 12.99 },
-  },
-  {
-    id: "6",
-    title: "እሳት ወይ አቤባ",
-    author: "ሎሬት ጸጋዬ ገብረመድህን",
-    progress: 0,
-    hasPdf: true,
-    hasAudio: true,
-    rating: 4.6,
-    coverUrl: "/covers/book-6.svg",
-    price: { pdf: 11.99, audio: 16.99 },
-  },
-]
 
 type FilterType = "all" | "reading" | "completed" | "not-started"
 
@@ -76,6 +16,60 @@ export default function LibraryPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [filter, setFilter] = useState<FilterType>("all")
   const [searchQuery, setSearchQuery] = useState("")
+
+  const [libraryBooks, setLibraryBooks] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  // Static book requested to appear in Library
+  const staticBook = {
+    id: "1",
+    title: "እቴሜቴ ሎሚ ሽታ",
+    author: "አዳም ረታ",
+    progress: 42,
+    hasPdf: true,
+    hasAudio: false,
+    coverUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRasdVDrRS2ZD7joktTuAHWUyH91ogj16m7Ig&s",
+    pdfUrl: "/እቴሜቴ ሎሚ ሽታ - አዳም ረታ.pdf",
+  }
+
+  useEffect(() => {
+    let mounted = true
+    setLoading(true)
+    ;(async () => {
+      try {
+        const res = await paymentsAPI.getPurchasedBooks(1, 100)
+        // Accept variations: res.data.books or res.data or res.books or res
+        const items = res?.data?.books || res?.data || res?.books || res || []
+        if (!mounted) return
+        const mapped = items.map((b: any) => ({
+          id: String(b.id),
+          title: b.title,
+          author: b.authorName || b.author_name || b.author || "Unknown",
+          progress: b.progress ?? 0,
+          hasPdf: (b.availableFormats || b.formats || []).some((f: any) => String(f.format_type || f).toLowerCase().includes('pdf')),
+          hasAudio: (b.availableFormats || b.formats || []).some((f: any) => String(f.format_type || f).toLowerCase().includes('audio')),
+          coverUrl: b.coverImageUrl || b.cover || b.cover_image_url || "/placeholder.svg",
+          price: b.formats ? (b.formats.find((f: any) => String(f.format_type).toLowerCase().includes('pdf'))?.price ?? null) : null,
+          rating: b.averageRating || b.rating || null,
+        }))
+
+        // Ensure static book is present (avoid duplicates)
+        const exists = mapped.some((mb: any) => mb.id === String(staticBook.id) || mb.title === staticBook.title)
+        const final = exists ? mapped : [staticBook, ...mapped]
+
+        setLibraryBooks(final)
+      } catch (e) {
+        // Ensure static book still shows even if fetch fails
+        setLibraryBooks([staticBook])
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    })()
+
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   const filteredBooks = libraryBooks.filter((book) => {
     // Search filter
@@ -149,21 +143,64 @@ export default function LibraryPage() {
       </div>
 
       {/* Books Grid/List */}
-      {filteredBooks.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-12">Loading...</div>
+      ) : filteredBooks.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No books found matching your criteria.</p>
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {filteredBooks.map((book) => (
-            <BookCard key={book.id} {...book} variant="compact" />
-          ))}
+          {filteredBooks.map((book) =>
+            book.id === "1" ? (
+              <div key={book.id} className="rounded-xl bg-card border border-border overflow-hidden group">
+                <div className="aspect-2/3 bg-muted overflow-hidden">
+                  <img src={book.coverUrl || "/placeholder.svg"} alt={book.title} className="w-full h-full object-cover" />
+                </div>
+                <div className="p-4">
+                  <h3 className="mt-2 text-sm font-medium text-foreground truncate">{book.title}</h3>
+                  <p className="text-xs text-muted-foreground truncate">{book.author}</p>
+                  {book.progress !== undefined && (
+                    <div className="mt-2 h-1 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full" style={{ width: `${book.progress}%` }} />
+                    </div>
+                  )}
+                  <div className="mt-3">
+                    <Link href="/read/1" className="w-full inline-block">
+                      <Button className="w-full">Continue</Button>
+                    </Link>
+                    <a href={book.pdfUrl} className="mt-2 block text-sm text-muted-foreground text-center underline">Open PDF</a>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <BookCard key={book.id} {...book} variant="compact" />
+            ),
+          )}
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredBooks.map((book) => (
-            <BookCard key={book.id} {...book} variant="horizontal" />
-          ))}
+          {filteredBooks.map((book) =>
+            book.id === "1" ? (
+              <div key={book.id} className="flex gap-4 p-4 rounded-xl bg-card border border-border group">
+                <div className="w-20 h-28 rounded-lg bg-muted overflow-hidden shrink-0">
+                  <img src={book.coverUrl || "/placeholder.svg"} alt={book.title} className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-foreground truncate">{book.title}</h3>
+                  <p className="text-sm text-muted-foreground">{book.author}</p>
+                  <div className="mt-3">
+                    <Link href="/read/1" className="inline-block">
+                      <Button>Continue</Button>
+                    </Link>
+                    <a href={book.pdfUrl} className="ml-3 text-sm text-muted-foreground underline">Open PDF</a>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <BookCard key={book.id} {...book} variant="horizontal" />
+            ),
+          )}
         </div>
       )}
     </div>

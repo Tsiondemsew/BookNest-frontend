@@ -47,7 +47,7 @@ export function AchievementBadge({
       )}
     >
       <div className="flex items-start gap-4">
-        <div className={cn("p-3 rounded-xl bg-gradient-to-br", badgeColors[type])}>
+        <div className={cn("p-3 rounded-xl bg-linear-to-br", badgeColors[type])}>
           <Icon className="w-6 h-6" />
         </div>
         <div className="flex-1 min-w-0">

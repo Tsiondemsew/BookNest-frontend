@@ -65,7 +65,7 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
 
   // Use auth context values if available, otherwise fall back to props
   const role = user?.role || userRole || "reader"
-  const name = user?.name || userName || "Guest"
+  const name = user?.display_name || userName || "Guest"
   const avatar = user?.avatar || userAvatar
 
   const navigation = role === "admin" ? adminNavigation : (role === "author" || role === "publisher") ? authorNavigation : readerNavigation
@@ -117,7 +117,7 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
 
           {/* Reading Streak Card (for reader/author) */}
           {role !== "admin" && (
-            <div className="mt-6 mx-1 p-4 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20">
+            <div className="mt-6 mx-1 p-4 rounded-xl bg-linear-to-br from-accent/20 to-accent/5 border border-accent/20">
               <div className="flex items-center gap-2 text-accent">
                 <FireIcon className="w-5 h-5" />
                 <span className="font-semibold">7 Day Streak!</span>
@@ -145,7 +145,7 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
               <AvatarFallback className="bg-sidebar-accent text-sidebar-foreground">
                 {name
                   .split(" ")
-                  .map((n) => n[0])
+                  .map((n: string) => n[0])
                   .join("")}
               </AvatarFallback>
             </Avatar>

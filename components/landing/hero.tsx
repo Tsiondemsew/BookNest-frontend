@@ -79,7 +79,7 @@ export function Hero() {
               ].map((book, index) => (
                 <div
                   key={book.title}
-                  className={`aspect-[2/3] rounded-lg bg-gradient-to-br ${book.color} shadow-lg transform transition-transform duration-300 hover:-translate-y-2 hover:shadow-xl`}
+                  className={`aspect-[2/3] rounded-lg bg-linear-to-br ${book.color} shadow-lg transform transition-transform duration-300 hover:-translate-y-2 hover:shadow-xl` }
                   style={{
                     transform: `rotateY(${(index - 2) * 5}deg)`,
                     zIndex: 5 - Math.abs(index - 2),

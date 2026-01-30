@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BookOpen, DollarSign, Eye, Star, TrendingUp, Users, ArrowUpRight, Clock } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/lib/auth-context"
 
 const stats = [
   { label: "Total Books", value: "12", change: "+2 this month", icon: BookOpen, trend: "up" },
@@ -27,12 +28,15 @@ const topBooks = [
   { title: "Digital Minimalism Guide", sales: 654, revenue: "$6,533", rating: 4.5 },
 ]
 
+
 export default function AuthorDashboardPage() {
+    const { user } = useAuth() 
+  const role = user?.role 
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-foreground">Author Dashboard</h1>
+          <h1 className="text-3xl font-serif font-bold text-foreground">{role?.charAt(0).toUpperCase() + role?.slice(1)} Dashboard</h1>
           <p className="text-muted-foreground mt-1">Welcome back, here's your publishing overview</p>
         </div>
         <Button asChild>

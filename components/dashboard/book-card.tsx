@@ -41,11 +41,11 @@ export function BookCard({
           className,
         )}
       >
-        <div className="w-20 h-28 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+        <div className="w-20 h-28 rounded-lg bg-muted overflow-hidden shrink-0">
           {coverUrl ? (
             <img src={coverUrl || "/placeholder.svg"} alt={title} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+            <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-primary/20 to-primary/5">
               <BookIcon className="w-8 h-8 text-primary/40" />
             </div>
           )}
@@ -92,7 +92,7 @@ export function BookCard({
   if (variant === "compact") {
     return (
       <Link href={`/books/${id}`} className={cn("group", className)}>
-        <div className="aspect-[2/3] rounded-lg bg-muted overflow-hidden">
+        <div className="aspect-2/3 rounded-lg bg-muted overflow-hidden">
           {coverUrl ? (
             <img
               src={coverUrl || "/placeholder.svg"}
@@ -100,7 +100,7 @@ export function BookCard({
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+            <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-primary/20 to-primary/5">
               <BookIcon className="w-10 h-10 text-primary/40" />
             </div>
           )}
@@ -127,7 +127,7 @@ export function BookCard({
         className,
       )}
     >
-      <div className="aspect-[3/4] bg-muted overflow-hidden">
+      <div className="aspect-3/4 bg-muted overflow-hidden">
         {coverUrl ? (
           <img
             src={coverUrl || "/placeholder.svg"}
@@ -135,7 +135,7 @@ export function BookCard({
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+          <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-primary/20 to-primary/5">
             <BookIcon className="w-16 h-16 text-primary/40" />
           </div>
         )}

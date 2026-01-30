@@ -152,7 +152,7 @@ export default function ListenPage() {
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
         {/* Book cover */}
-        <div className="w-64 h-64 md:w-80 md:h-80 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 shadow-2xl flex items-center justify-center mb-8">
+        <div className="w-64 h-64 md:w-80 md:h-80 rounded-2xl bg-linear-to-br from-primary/30 to-primary/10 shadow-2xl flex items-center justify-center mb-8">
           <div className="w-48 h-48 md:w-60 md:h-60 rounded-xl bg-primary/20 flex items-center justify-center">
             <span className="text-6xl text-primary/40">📚</span>
           </div>
