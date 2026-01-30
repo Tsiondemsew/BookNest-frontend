@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookNestLogo } from "@/components/icons";
+import { authAPI } from "@/lib/api";
 import { BookOpen, Store, PenLine, EyeIcon, EyeOffIcon, ArrowLeft, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -93,36 +94,30 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      const apiUrl = "http://localhost:5000/api/auth";
-
-      const res = await fetch(`${apiUrl}/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          display_name: displayName.trim(),
-          email: email.trim(),
-          password,
-          role,
-        }),
+      // Use centralized API helper (handles base URL and auth headers)
+      const resp = await authAPI.register({
+        display_name: displayName.trim(),
+        email: email.trim(),
+        password,
+        role,
       });
 
-      const data = await res.json();
+      // Normalize possible response shapes from different backends
+      const token = resp?.token || resp?.data?.token || resp?.data?.accessToken;
+      const user = resp?.user || resp?.data?.user || resp?.data;
 
-      if (!res.ok) {
-        throw new Error(data.error || data.message || `Registration failed: ${res.status}`);
+      if (!token || !user) {
+        throw new Error(resp?.error || resp?.message || 'Registration failed');
       }
 
-      if (data.success === false) {
-        throw new Error(data.error || "Registration failed");
-      }
-      const { token, user } = data
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+
       // Role-based redirect
       if (user.role === "admin") router.push("/admin");
       else if (user.role === "reader") router.push("/dashboard");
       else if (user.role === "author") router.push("/author");
-      else if (data.role === "publisher") router.push("/author");
+      else if (user.role === "publisher") router.push("/author");
       else router.push("/");
 
     } catch (err: any) {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { authAPI } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,24 +29,18 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-      const response = await fetch(`${apiUrl}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
-      });
+      const resp = await authAPI.login({ email: email.trim(), password });
 
-      const data = await response.json();
+      // Normalize responses
+      const token = resp?.token || resp?.data?.token || resp?.data?.accessToken;
+      const user = resp?.user || resp?.data?.user || resp?.data;
 
-      if (!response.ok) {
-        throw new Error(data.message || data.error || "Invalid email or password");
+      if (!token || !user) {
+        throw new Error(resp?.error || resp?.message || 'Invalid email or password');
       }
 
-      const { token, user } = data;
-      if (!token || !user?.role) throw new Error("Invalid response from server");
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
 
       // Role-based redirect logic
       if (user.role === "admin") router.push("/admin");

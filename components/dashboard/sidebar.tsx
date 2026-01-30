@@ -68,7 +68,7 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
   const name = user?.name || userName || "Guest"
   const avatar = user?.avatar || userAvatar
 
-  const navigation = role === "admin" ? adminNavigation : role === "author" ? authorNavigation : readerNavigation
+  const navigation = role === "admin" ? adminNavigation : (role === "author" || role === "publisher") ? authorNavigation : readerNavigation
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border">
