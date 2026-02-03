@@ -29,7 +29,7 @@ export default function LibraryPage() {
     hasPdf: true,
     hasAudio: false,
     coverUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRasdVDrRS2ZD7joktTuAHWUyH91ogj16m7Ig&s",
-    pdfUrl: "/እቴሜቴ ሎሚ ሽታ - አዳም ረታ.pdf",
+   // pdfUrl: "/እቴሜቴ ሎሚ ሽታ - አዳም ረታ.pdf",
   }
 
   useEffect(() => {
@@ -169,7 +169,8 @@ export default function LibraryPage() {
                     <Link href="/read/1" className="w-full inline-block">
                       <Button className="w-full">Continue</Button>
                     </Link>
-                    <a href={book.pdfUrl} className="mt-2 block text-sm text-muted-foreground text-center underline">Open PDF</a>
+                    {/* <a href={book.pdfUrl} className="mt-2 block text-sm text-muted-foreground text-center underline">Open PDF</a>
+                  */}
                   </div>
                 </div>
               </div>
@@ -193,8 +194,9 @@ export default function LibraryPage() {
                     <Link href="/read/1" className="inline-block">
                       <Button>Continue</Button>
                     </Link>
-                    <a href={book.pdfUrl} className="ml-3 text-sm text-muted-foreground underline">Open PDF</a>
-                  </div>
+                    {/* <a href={book.pdfUrl} className="ml-3 text-sm text-muted-foreground underline">Open PDF</a>
+                   */}
+                   </div>
                 </div>
               </div>
             ) : (

@@ -23,16 +23,14 @@ export function Hero() {
             </div>
           </div>
 
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl text-balance">
-            Your Digital
-            <span className="text-primary"> Reading </span>
-            Sanctuary
+          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-5xl text-balance">
+           Welcome to 
+            <span className="text-primary"> BookNest </span>
+           
           </h1>
 
           <p className="mt-6 text-lg leading-relaxed text-muted-foreground max-w-2xl mx-auto text-pretty">
-            Discover, read, and grow with BookNest. An academic-grade platform for digital books, audiobooks, and
-            personalized learning journeys. Track your progress, connect with authors, and join a community of lifelong
-            learners.
+            Your digital home for reading and learning. Explore books and audiobooks, track your progress, and grow through personalized reading journeys—all in one smart, academic-grade platform.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">

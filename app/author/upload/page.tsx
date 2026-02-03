@@ -486,7 +486,7 @@ export default function UploadBookPage() {
   />
   {/* More space for "ETB" */}
 </div>
-<p className="text-sm text-muted-foreground">Minimum: 50 ETB</p>              </div>
+<p className="text-sm text-muted-foreground"></p>              </div>
             )}
 
             {formData.pdfFile && (
@@ -505,9 +505,9 @@ export default function UploadBookPage() {
 
             {formData.audioFile && (
               <div className="space-y-2">
-                <Label htmlFor="audioPrice">Audiobook Price (USD) *</Label>
+                <Label htmlFor="audioPrice">Audiobook Price (ETB) *</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"></span>
                   <Input
                     id="audioPrice"
                     type="number"
@@ -519,7 +519,7 @@ export default function UploadBookPage() {
                     onChange={(e) => setFormData((prev) => ({ ...prev, audioPrice: e.target.value }))}
                   />
                 </div>
-                <p className="text-sm text-muted-foreground">Recommended: $14.99 - $24.99</p>
+                <p className="text-sm text-muted-foreground"></p>
               </div>
             )}
 
@@ -540,7 +540,7 @@ export default function UploadBookPage() {
             <div className="p-4 rounded-lg bg-muted/50">
               <h4 className="font-medium text-foreground mb-2">Revenue Share</h4>
               <p className="text-sm text-muted-foreground">
-                Authors receive 70% of the sale price. BookNest retains 30% for platform maintenance and payment
+                Authors receive 80% of the sale price. BookNest retains 20% for platform maintenance and payment
                 processing.
               </p>
             </div>

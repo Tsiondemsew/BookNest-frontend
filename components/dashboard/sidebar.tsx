@@ -116,7 +116,7 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
           </ul>
 
           {/* Reading Streak Card (for reader/author) */}
-          {role !== "admin" && (
+          {role == "reader" && (
             <div className="mt-6 mx-1 p-4 rounded-xl bg-linear-to-br from-accent/20 to-accent/5 border border-accent/20">
               <div className="flex items-center gap-2 text-accent">
                 <FireIcon className="w-5 h-5" />

@@ -3,29 +3,29 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, DollarSign, Eye, Star, TrendingUp, Users, ArrowUpRight, Clock } from "lucide-react"
+import { BookOpen,DollarSign,Eye, Star, TrendingUp, Users, ArrowUpRight, Clock } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 
 const stats = [
   { label: "Total Books", value: "12", change: "+2 this month", icon: BookOpen, trend: "up" },
-  { label: "Total Revenue", value: "$24,580", change: "+12.5%", icon: DollarSign, trend: "up" },
+  { label: "Total Revenue", value: "24,580 ETB", change: "+12.5%", icon:DollarSign, trend: "up" },
   { label: "Total Readers", value: "3,847", change: "+284 this week", icon: Users, trend: "up" },
   { label: "Avg. Rating", value: "4.7", change: "Across all books", icon: Star, trend: "neutral" },
 ]
 
 const recentActivity = [
-  { type: "sale", message: "New sale: The Art of Focus", time: "2 min ago", amount: "$14.99" },
+  { type: "sale", message: "New sale: The Art of Focus", time: "2 min ago", amount: "140 ETB" },
   { type: "review", message: "New 5-star review on Mindful Living", time: "1 hour ago" },
-  { type: "sale", message: "New sale: Digital Minimalism Guide", time: "3 hours ago", amount: "$9.99" },
+  { type: "sale", message: "New sale: Digital Minimalism Guide", time: "3 hours ago", amount: "100 ETB" },
   { type: "follower", message: "Sarah M. started following you", time: "5 hours ago" },
   { type: "review", message: "New 4-star review on The Art of Focus", time: "Yesterday" },
 ]
 
 const topBooks = [
-  { title: "The Art of Focus", sales: 1284, revenue: "$19,246", rating: 4.8 },
-  { title: "Mindful Living", sales: 892, revenue: "$8,027", rating: 4.6 },
-  { title: "Digital Minimalism Guide", sales: 654, revenue: "$6,533", rating: 4.5 },
+  { title: "The Art of Focus", sales: 1284, revenue: "19,246 ETB", rating: 4.8 },
+  { title: "Mindful Living", sales: 892, revenue: "8,027 ETB", rating: 4.6 },
+  { title: "Digital Minimalism Guide", sales: 654, revenue: "6,533 ETB", rating: 4.5 },
 ]
 
 
